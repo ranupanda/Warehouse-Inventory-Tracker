@@ -10,7 +10,8 @@ import com.koorier.validation.WarehouseInventoryValidation;
 public class WarehouseImplementation implements Warehouse {
 
 	private Map<String, Product> products = new HashMap<>();
-
+	
+	//method to add products
 	@Override
 	public String addProduct(String productId, String name, int quantity, int reorderThreshold)
 			throws WarehouseInventoryException {
@@ -24,20 +25,41 @@ public class WarehouseImplementation implements Warehouse {
 
 	}
 
+	//method to receiveShipments
 	@Override
 	public String receiveShipment(String productId, int receivedUnits) throws WarehouseInventoryException {
 
-		if (!products.containsKey(productId)) {
-			throw new WarehouseInventoryException("Product " + productId + " not found");
-		}
-
-		WarehouseInventoryValidation.validateAmount(receivedUnits);
+		WarehouseInventoryValidation.validateProductID(productId, products);
+		WarehouseInventoryValidation.validateReceivedUnits(receivedUnits);
 
 		Product product = products.get(productId);
 		int newQuantity = product.getQuantity() + receivedUnits;
 		product.setQuantity(newQuantity);
 		return "Shipment received: " + product.getName() + " quantity updated to " + newQuantity;
 
+	}
+
+	//method to fulfillOrder
+	@Override
+	public String fulfillOrder(String productId, int quantity) throws WarehouseInventoryException {
+
+		WarehouseInventoryValidation.validateProductID(productId, products);
+		WarehouseInventoryValidation.validateReceivedUnits(quantity);
+
+		Product product = products.get(productId);
+		if (product.getQuantity() < quantity) {
+			throw new WarehouseInventoryException(
+					"Insufficient stock for " + product.getName() + ". Available: " + product.getQuantity());
+		}
+		
+		int updatedQuantity = product.getQuantity()-quantity;
+		product.setQuantity(updatedQuantity);
+		
+		if (updatedQuantity < product.getReorderThreshold()) {
+	            System.out.println("Low stock alert: " + product.getName() + " has only " + updatedQuantity + " left!");
+	        }
+		 
+		 return  "Order fulfilled for : " + product.getName() + " quantity : " + quantity;
 	}
 
 }

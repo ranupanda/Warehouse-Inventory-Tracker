@@ -13,7 +13,7 @@ public class WarehousInventoryTracker {
 			WarehouseImplementation wit = new WarehouseImplementation();
 			boolean exit = false;
 			while (!exit) {
-				System.out.println("Option\n" + "1.Add an new product\n" + "2.Recieve Shipment \n" + "0.Exit");
+				System.out.println("Option\n" + "1.Add an new product\n" + "2.Recieve Shipment \n" +"3.Fulfill order \n"+ "0.Exit");
 				System.out.println("Enter option :");
 				try {
 					switch (sc.nextInt()) {
@@ -29,12 +29,23 @@ public class WarehousInventoryTracker {
 						System.out.println(wit.receiveShipment(sc.next(), sc.nextInt()));
 						break;
 					}
+					case 3:{
+						System.out.println("Enter productId and quantity");
+						
+						System.out.println(wit.fulfillOrder(sc.next(), sc.nextInt()));
+						break;
+					}
+					
 					case 0:
 						exit = true;
 						break;
 					}
 				} catch (WarehouseInventoryException e) {
 					System.out.println(e.getMessage());
+				}
+				catch(Exception e) {
+					System.out.println(e.getMessage());
+					sc.nextLine();
 				}
 			}
 		}
