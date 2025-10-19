@@ -1,5 +1,8 @@
 package com.koorier.service;
 
-public interface StockObserver {
+import com.koorier.core.Product;
 
+public interface StockObserver {
+	
+  void onLowStock(Product product);
 }

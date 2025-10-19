@@ -1,6 +1,8 @@
 package com.koorier.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.koorier.core.Product;
@@ -10,8 +12,10 @@ import com.koorier.validation.WarehouseInventoryValidation;
 public class WarehouseImplementation implements Warehouse {
 
 	private Map<String, Product> products = new HashMap<>();
-	
-	//method to add products
+
+	private List<StockObserver> observers = new ArrayList<>();
+
+	// method to add products
 	@Override
 	public String addProduct(String productId, String name, int quantity, int reorderThreshold)
 			throws WarehouseInventoryException {
@@ -25,7 +29,7 @@ public class WarehouseImplementation implements Warehouse {
 
 	}
 
-	//method to receiveShipments
+	// method to receiveShipments
 	@Override
 	public String receiveShipment(String productId, int receivedUnits) throws WarehouseInventoryException {
 
@@ -39,7 +43,7 @@ public class WarehouseImplementation implements Warehouse {
 
 	}
 
-	//method to fulfillOrder
+	// method to fulfillOrder
 	@Override
 	public String fulfillOrder(String productId, int quantity) throws WarehouseInventoryException {
 
@@ -51,15 +55,25 @@ public class WarehouseImplementation implements Warehouse {
 			throw new WarehouseInventoryException(
 					"Insufficient stock for " + product.getName() + ". Available: " + product.getQuantity());
 		}
-		
-		int updatedQuantity = product.getQuantity()-quantity;
+
+		int updatedQuantity = product.getQuantity() - quantity;
 		product.setQuantity(updatedQuantity);
-		
+
 		if (updatedQuantity < product.getReorderThreshold()) {
-	            System.out.println("Low stock alert: " + product.getName() + " has only " + updatedQuantity + " left!");
-	        }
-		 
-		 return  "Order fulfilled for : " + product.getName() + " quantity : " + quantity;
+			notifyObservers(product);
+		}
+
+		return "Order fulfilled for : " + product.getName() + " quantity : " + quantity;
+	}
+
+	public void addObserver(StockObserver observer) {
+		observers.add(observer);
+	}
+
+	private void notifyObservers(Product product) {
+		for (StockObserver observer : observers) {
+			observer.onLowStock(product);
+		}
 	}
 
 }
