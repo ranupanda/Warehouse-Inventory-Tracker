@@ -10,5 +10,7 @@ public interface Warehouse {
 	String receiveShipment(String productId, int receivedUnits) throws WarehouseInventoryException;
 	
 	String fulfillOrder(String productId , int quantity) throws WarehouseInventoryException;
+	
+	void viewAllProduct();
 
 }
