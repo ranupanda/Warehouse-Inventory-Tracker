@@ -37,39 +37,71 @@ public class WarehouseImplementation implements Warehouse {
 
 	// method to receiveShipments
 	@Override
-	public String receiveShipment(String productId, int receivedUnits) throws WarehouseInventoryException {
+	public void receiveShipment(String productId, int receivedUnits) throws WarehouseInventoryException {
+		Runnable task = new Runnable() {
 
-		WarehouseInventoryValidation.validateProductID(productId, products);
-		WarehouseInventoryValidation.validateReceivedUnits(receivedUnits);
+			@Override
+			public void run() {
 
-		Product product = products.get(productId);
-		int newQuantity = product.getQuantity() + receivedUnits;
-		product.setQuantity(newQuantity);
-		return "Shipment received: " + product.getName() + " quantity updated to " + newQuantity;
+				synchronized (WarehouseImplementation.this) {
+					try {
+						WarehouseInventoryValidation.validateProductID(productId, products);
+						WarehouseInventoryValidation.validateReceivedUnits(receivedUnits);
+
+						Product product = products.get(productId);
+						int newQuantity = product.getQuantity() + receivedUnits;
+						product.setQuantity(newQuantity);
+						System.out.println(
+								"Shipment received: " + product.getName() + " quantity updated to " + newQuantity);
+					} catch (WarehouseInventoryException e) {
+						System.out.println(e.getMessage());
+					}
+				}
+
+			}
+		};
+		Thread thread = new Thread(task);
+		thread.start();
 
 	}
 
 	// method to fulfillOrder
 	@Override
-	public String fulfillOrder(String productId, int quantity) throws WarehouseInventoryException {
+	public void fulfillOrder(String productId, int quantity) throws WarehouseInventoryException {
+		Runnable task = new Runnable() {
 
-		WarehouseInventoryValidation.validateProductID(productId, products);
-		WarehouseInventoryValidation.validateReceivedUnits(quantity);
+			@Override
+			public void run() {
 
-		Product product = products.get(productId);
-		if (product.getQuantity() < quantity) {
-			throw new WarehouseInventoryException(
-					"Insufficient stock for " + product.getName() + ". Available: " + product.getQuantity());
-		}
+				synchronized (WarehouseImplementation.this) {
+					try {
+						WarehouseInventoryValidation.validateProductID(productId, products);
+						WarehouseInventoryValidation.validateReceivedUnits(quantity);
 
-		int updatedQuantity = product.getQuantity() - quantity;
-		product.setQuantity(updatedQuantity);
+						Product product = products.get(productId);
+						if (product.getQuantity() < quantity) {
+							throw new WarehouseInventoryException("Insufficient stock for " + product.getName()
+									+ ". Available: " + product.getQuantity());
+						}
 
-		if (updatedQuantity < product.getReorderThreshold()) {
-			notifyObservers(product);
-		}
+						int updatedQuantity = product.getQuantity() - quantity;
+						product.setQuantity(updatedQuantity);
 
-		return "Order fulfilled for : " + product.getName() + " quantity : " + quantity;
+						if (updatedQuantity < product.getReorderThreshold()) {
+							notifyObservers(product);
+						}
+
+						System.out.println("Order fulfilled for: " + product.getName() + " quantity: " + quantity);
+					} catch (WarehouseInventoryException e) {
+						System.out.println(e.getMessage());
+					}
+				}
+			}
+		};
+
+		Thread thread = new Thread(task);
+		thread.start(); // Start the thread
+
 	}
 
 	public void addObserver(StockObserver observer) {
@@ -106,16 +138,11 @@ public class WarehouseImplementation implements Warehouse {
 		}
 	}
 
-	
 	// method to load from the file
 	public void loadFromFile(String fileName) throws WarehouseInventoryException {
-		File file = new File(fileName);
-		if (!file.exists()) {
-			System.out.println("No existing inventory file found. Starting with an empty inventory.");
-			return;
-		}
+		WarehouseInventoryValidation.validateFileExists(fileName);
 
-		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
 
 			String line;
 			while ((line = br.readLine()) != null) {

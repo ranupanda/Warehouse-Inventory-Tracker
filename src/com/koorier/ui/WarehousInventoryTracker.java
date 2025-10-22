@@ -49,13 +49,13 @@ public class WarehousInventoryTracker {
 					case 2: {
 						System.out.println("Enter productId and receivedUnits");
 
-						System.out.println(wit.receiveShipment(sc.next(), sc.nextInt()));
+						wit.receiveShipment(sc.next(), sc.nextInt());
 						break;
 					}
 					case 3: {
 						System.out.println("Enter productId and quantity");
 
-						System.out.println(wit.fulfillOrder(sc.next(), sc.nextInt()));
+						wit.fulfillOrder(sc.next(), sc.nextInt());
 						break;
 					}
 					case 4: {
