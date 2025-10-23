@@ -1,2 +1,3 @@
 11,laptop,20,5
-12,Mouse,30,10
+12,Mouse,60,10
+13,pendrive,30,7

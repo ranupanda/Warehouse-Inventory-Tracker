@@ -1,5 +1,6 @@
 package com.koorier.ui;
 
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 import com.koorier.core.Product;
@@ -13,7 +14,7 @@ public class WarehousInventoryTracker {
 	public static void main(String[] args) {
 
 		try (Scanner sc = new Scanner(System.in)) {
-
+			
 			WarehouseImplementation wit = new WarehouseImplementation();
 
 			// Load inventory from file
@@ -35,15 +36,33 @@ public class WarehousInventoryTracker {
 
 			boolean exit = false;
 			while (!exit) {
-				System.out.println("Option\n" + "1.Add an new product\n" + "2.Recieve Shipment \n"
-						+ "3.Fulfill order \n" + "4.View all product\n" + "0.Exit");
+				System.out.println("Option\n" 
+						+ "1.Add an new product\n"
+						+ "2.Recieve Shipment \n"
+						+ "3.Fulfill order \n" 
+						+ "4.View all product\n"
+						+ "0.Exit");
 				System.out.println("Enter option :");
 				try {
 					switch (sc.nextInt()) {
 					case 1: {
 						System.out.println("Enter product details:productId,name,quantity,reorderThreshold");
+						
+						System.out.print("Enter Product ID: ");
+						String productId = sc.next();
+						
+						sc.nextLine();
+						
+						System.out.print("Enter Product Name: ");
+						String name = sc.nextLine();  // works fine with spaces
 
-						System.out.println(wit.addProduct(sc.next(), sc.next(), sc.nextInt(), sc.nextInt()));
+						System.out.print("Enter Quantity: ");
+						int quantity = Integer.parseInt(sc.nextLine());
+
+						System.out.print("Enter Reorder Threshold: ");
+						int reorderThreshold = Integer.parseInt(sc.nextLine());
+
+						System.out.println(wit.addProduct(productId, name, quantity, reorderThreshold));
 						break;
 					}
 					case 2: {
@@ -75,7 +94,14 @@ public class WarehousInventoryTracker {
 						System.out.println("Exiting....");
 						break;
 					}
+					default: {
+				        System.out.println("Invalid option! Please enter a valid choice from the menu.");
+				        break;
+				    }
 					}
+				}catch (InputMismatchException e) {
+				    System.out.println("Invalid input type! Please enter valid input.");
+				    sc.nextLine();
 				} catch (WarehouseInventoryException e) {
 					System.out.println(e.getMessage());
 				} catch (Exception e) {
@@ -85,4 +111,5 @@ public class WarehousInventoryTracker {
 			}
 		}
 	}
+	
 }

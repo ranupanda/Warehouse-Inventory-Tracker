@@ -8,15 +8,28 @@ import com.koorier.customException.WarehouseInventoryException;
 
 public class WarehouseInventoryValidation {
 
-	// To validate Received Units
-	public static void validateReceivedUnits(int receivedUnits) throws WarehouseInventoryException {
-		if (receivedUnits <= 0) {
-			throw new WarehouseInventoryException("Received Units must be positive.");
+	// validate ProductId format
+	public static void validateProductIdFormat(String productId) throws WarehouseInventoryException {
+		if (!productId.matches("^\\d+[A-Za-z]*$")) {
+			throw new WarehouseInventoryException("Enter valid ProductId");
+		}
+	}
+
+	public static void validateProductName(String name) throws WarehouseInventoryException {
+		if (!name.matches("^[A-Za-z\\s]+(?:\\s?[A-Za-z0-9]+)*$")) {
+			throw new WarehouseInventoryException("Enter valid product name");
+		}
+	}
+
+	// validate for non negative input
+	public static void validateValue(int value, String fieldName) throws WarehouseInventoryException {
+		if (value < 0) {
+			throw new WarehouseInventoryException(fieldName + " must be positive.");
 		}
 
 	}
 
-	// to validate product existence
+	// validate product existence
 	public static void validateProductID(String productId, Map<String, Product> products)
 			throws WarehouseInventoryException {
 		if (!products.containsKey(productId)) {
@@ -24,13 +37,14 @@ public class WarehouseInventoryValidation {
 		}
 
 	}
-	
+
 	// validate file exist or not
-	public static void validateFileExists(String fileName) throws WarehouseInventoryException{
+	public static void validateFileExists(String fileName) throws WarehouseInventoryException {
 		File file = new File(fileName);
 		if (!file.exists()) {
 			System.out.println("No existing inventory file found. Starting with an empty inventory.");
 			return;
 		}
 	}
+
 }

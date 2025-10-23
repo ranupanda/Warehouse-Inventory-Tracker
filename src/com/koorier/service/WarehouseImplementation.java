@@ -17,17 +17,29 @@ import com.koorier.validation.WarehouseInventoryValidation;
 
 public class WarehouseImplementation implements Warehouse {
 
+	//private String warehouseId;
+	
 	private Map<String, Product> products = new HashMap<>();
 
 	private List<StockObserver> observers = new ArrayList<>();
+
+//	public WarehouseImplementation(String warehouseId) {
+//		this.warehouseId = warehouseId;
+//	}
 
 	// method to add products
 	@Override
 	public String addProduct(String productId, String name, int quantity, int reorderThreshold)
 			throws WarehouseInventoryException {
+		WarehouseInventoryValidation.validateProductIdFormat(productId);
+		WarehouseInventoryValidation.validateProductName(name);
+		WarehouseInventoryValidation.validateValue(quantity,"Quantity");
+		WarehouseInventoryValidation.validateValue(reorderThreshold,"Reorder Threshold");
+		
 		if (products.containsKey(productId)) {
 			throw new WarehouseInventoryException("Error: Product ID '" + productId + "' already exists.");
 		} else {
+			
 			Product product = new Product(productId, name, quantity, reorderThreshold);
 			products.put(product.getProductId(), product);
 			return "product added successfully";
@@ -46,7 +58,7 @@ public class WarehouseImplementation implements Warehouse {
 				synchronized (WarehouseImplementation.this) {
 					try {
 						WarehouseInventoryValidation.validateProductID(productId, products);
-						WarehouseInventoryValidation.validateReceivedUnits(receivedUnits);
+						WarehouseInventoryValidation.validateValue(receivedUnits, "Receive unit");
 
 						Product product = products.get(productId);
 						int newQuantity = product.getQuantity() + receivedUnits;
@@ -76,7 +88,7 @@ public class WarehouseImplementation implements Warehouse {
 				synchronized (WarehouseImplementation.this) {
 					try {
 						WarehouseInventoryValidation.validateProductID(productId, products);
-						WarehouseInventoryValidation.validateReceivedUnits(quantity);
+						WarehouseInventoryValidation.validateValue(quantity, "Order Quantity");
 
 						Product product = products.get(productId);
 						if (product.getQuantity() < quantity) {
