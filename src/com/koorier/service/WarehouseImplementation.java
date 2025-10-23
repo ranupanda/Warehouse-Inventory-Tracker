@@ -7,9 +7,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.koorier.core.Product;
 import com.koorier.customException.WarehouseInventoryException;
@@ -17,15 +20,17 @@ import com.koorier.validation.WarehouseInventoryValidation;
 
 public class WarehouseImplementation implements Warehouse {
 
-	//private String warehouseId;
-	
+	private String warehouseId;
+
 	private Map<String, Product> products = new HashMap<>();
 
 	private List<StockObserver> observers = new ArrayList<>();
 
-//	public WarehouseImplementation(String warehouseId) {
-//		this.warehouseId = warehouseId;
-//	}
+	private ExecutorService executor = Executors.newFixedThreadPool(5);
+
+	public WarehouseImplementation(String warehouseId) {
+		this.warehouseId = warehouseId;
+	}
 
 	// method to add products
 	@Override
@@ -33,13 +38,13 @@ public class WarehouseImplementation implements Warehouse {
 			throws WarehouseInventoryException {
 		WarehouseInventoryValidation.validateProductIdFormat(productId);
 		WarehouseInventoryValidation.validateProductName(name);
-		WarehouseInventoryValidation.validateValue(quantity,"Quantity");
-		WarehouseInventoryValidation.validateValue(reorderThreshold,"Reorder Threshold");
-		
+		WarehouseInventoryValidation.validateValue(quantity, "Quantity");
+		WarehouseInventoryValidation.validateValue(reorderThreshold, "Reorder Threshold");
+
 		if (products.containsKey(productId)) {
 			throw new WarehouseInventoryException("Error: Product ID '" + productId + "' already exists.");
 		} else {
-			
+
 			Product product = new Product(productId, name, quantity, reorderThreshold);
 			products.put(product.getProductId(), product);
 			return "product added successfully";
@@ -50,70 +55,53 @@ public class WarehouseImplementation implements Warehouse {
 	// method to receiveShipments
 	@Override
 	public void receiveShipment(String productId, int receivedUnits) throws WarehouseInventoryException {
-		Runnable task = new Runnable() {
+		executor.submit(() -> {
+			synchronized (WarehouseImplementation.this) {
+				try {
+					WarehouseInventoryValidation.validateProductID(productId, products);
+					WarehouseInventoryValidation.validateValue(receivedUnits, "Received unit");
 
-			@Override
-			public void run() {
-
-				synchronized (WarehouseImplementation.this) {
-					try {
-						WarehouseInventoryValidation.validateProductID(productId, products);
-						WarehouseInventoryValidation.validateValue(receivedUnits, "Receive unit");
-
-						Product product = products.get(productId);
-						int newQuantity = product.getQuantity() + receivedUnits;
-						product.setQuantity(newQuantity);
-						System.out.println(
-								"Shipment received: " + product.getName() + " quantity updated to " + newQuantity);
-					} catch (WarehouseInventoryException e) {
-						System.out.println(e.getMessage());
-					}
+					Product product = products.get(productId);
+					int newQuantity = product.getQuantity() + receivedUnits;
+					product.setQuantity(newQuantity);
+					System.out
+							.println("Shipment received: " + product.getName() + " quantity updated to " + newQuantity);
+				} catch (WarehouseInventoryException e) {
+					System.out.println(e.getMessage());
 				}
-
 			}
-		};
-		Thread thread = new Thread(task);
-		thread.start();
+		});
 
 	}
 
 	// method to fulfillOrder
 	@Override
 	public void fulfillOrder(String productId, int quantity) throws WarehouseInventoryException {
-		Runnable task = new Runnable() {
+		executor.submit(() -> {
+			synchronized (WarehouseImplementation.this) {
+				try {
+					WarehouseInventoryValidation.validateProductID(productId, products);
+					WarehouseInventoryValidation.validateValue(quantity, "Order Quantity");
 
-			@Override
-			public void run() {
-
-				synchronized (WarehouseImplementation.this) {
-					try {
-						WarehouseInventoryValidation.validateProductID(productId, products);
-						WarehouseInventoryValidation.validateValue(quantity, "Order Quantity");
-
-						Product product = products.get(productId);
-						if (product.getQuantity() < quantity) {
-							throw new WarehouseInventoryException("Insufficient stock for " + product.getName()
-									+ ". Available: " + product.getQuantity());
-						}
-
-						int updatedQuantity = product.getQuantity() - quantity;
-						product.setQuantity(updatedQuantity);
-
-						if (updatedQuantity < product.getReorderThreshold()) {
-							notifyObservers(product);
-						}
-
-						System.out.println("Order fulfilled for: " + product.getName() + " quantity: " + quantity);
-					} catch (WarehouseInventoryException e) {
-						System.out.println(e.getMessage());
+					Product product = products.get(productId);
+					if (product.getQuantity() < quantity) {
+						throw new WarehouseInventoryException("Insufficient stock for " + product.getName()
+								+ ". Available: " + product.getQuantity());
 					}
+
+					int updatedQuantity = product.getQuantity() - quantity;
+					product.setQuantity(updatedQuantity);
+
+					if (updatedQuantity < product.getReorderThreshold()) {
+						notifyObservers(product);
+					}
+
+					System.out.println("Order fulfilled for: " + product.getName() + " quantity: " + quantity);
+				} catch (WarehouseInventoryException e) {
+					System.out.println(e.getMessage());
 				}
 			}
-		};
-
-		Thread thread = new Thread(task);
-		thread.start(); // Start the thread
-
+		});
 	}
 
 	public void addObserver(StockObserver observer) {
@@ -121,9 +109,7 @@ public class WarehouseImplementation implements Warehouse {
 	}
 
 	private void notifyObservers(Product product) {
-		for (StockObserver observer : observers) {
-			observer.onLowStock(product);
-		}
+		observers.forEach(observer -> observer.onLowStock(product));
 	}
 
 	// method to view all the product
@@ -138,12 +124,12 @@ public class WarehouseImplementation implements Warehouse {
 
 	// method to add inventory state to text file
 
-	public void saveToFile(String fileName) throws WarehouseInventoryException {
+	public void saveToFile() throws WarehouseInventoryException {
+		String fileName = "inventory_" + warehouseId + ".txt";
 		try (PrintWriter writer = new PrintWriter(new FileWriter(fileName))) {
-			for (Product p : products.values()) {
-				writer.println(
-						p.getProductId() + "," + p.getName() + "," + p.getQuantity() + "," + p.getReorderThreshold());
-			}
+			products.values().stream().map(
+					p -> p.getProductId() + "," + p.getName() + "," + p.getQuantity() + "," + p.getReorderThreshold())
+					.forEach(line -> writer.println(line));
 			System.out.println("Invetory state save to :" + fileName);
 		} catch (IOException e) {
 			throw new WarehouseInventoryException("Error saving inventory to file: " + e.getMessage());
@@ -151,34 +137,40 @@ public class WarehouseImplementation implements Warehouse {
 	}
 
 	// method to load from the file
-	public void loadFromFile(String fileName) throws WarehouseInventoryException {
-		WarehouseInventoryValidation.validateFileExists(fileName);
-
+	public void loadFromFile() throws WarehouseInventoryException {
+		String fileName = "inventory_" + warehouseId + ".txt";
+		//WarehouseInventoryValidation.validateFileExists(fileName);
+		File file = new File(fileName);
+		if (!file.exists()) {
+			//System.out.println("No existing inventory file found. Starting with an empty inventory.");
+			return;
+		}
 		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
 
-			String line;
-			while ((line = br.readLine()) != null) {
-				String[] part = line.split(",");
-				if (part.length == 4) {
-					try {
-						String productId = part[0].trim();
-						String productName = part[1].trim();
-						int quantity = Integer.parseInt(part[2].trim());
-						int reorderThreshold = Integer.parseInt(part[3].trim());
-
-						products.put(productId, new Product(productId, productName, quantity, reorderThreshold));
-					} catch (NumberFormatException e) {
-						System.out.println(e.getMessage());
-						System.out.println("invalid number format in line:" + line);
-					}
-				} else {
-					System.out.println("Ignoring line due to invalid format: " + line);
+			br.lines().map(line -> line.split(",")).filter(parts -> parts.length == 4).forEach(part -> {
+				try {
+					String productId = part[0].trim();
+					String productName = part[1].trim();
+					int quantity = Integer.parseInt(part[2].trim());
+					int reorderThreshold = Integer.parseInt(part[3].trim());
+					products.put(productId, new Product(productId, productName, quantity, reorderThreshold));
+				} catch (NumberFormatException e) {
+					System.out.println("Invalid number format in line: " + Arrays.toString(part));
 				}
-			}
+			});
 			System.out.println("Inventory loaded from " + fileName);
 		} catch (IOException e) {
 			throw new WarehouseInventoryException("Error loading inventory from file");
 		}
+	}
+
+	public void shutdown() {
+		executor.shutdown();
+		System.out.println("Warehouse operations shut down.");
+	}
+
+	public String getWarehouseId() {
+		return warehouseId;
 	}
 
 }

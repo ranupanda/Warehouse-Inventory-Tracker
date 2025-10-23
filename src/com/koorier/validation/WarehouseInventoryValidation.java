@@ -23,7 +23,7 @@ public class WarehouseInventoryValidation {
 
 	// validate for non negative input
 	public static void validateValue(int value, String fieldName) throws WarehouseInventoryException {
-		if (value < 0) {
+		if (value <= 0) {
 			throw new WarehouseInventoryException(fieldName + " must be positive.");
 		}
 
