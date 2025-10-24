@@ -1,5 +1,6 @@
 package com.koorier.core;
 
+//Core entity for products in inventory
 public class Product {
 
 	private String productId;
@@ -15,6 +16,7 @@ public class Product {
 		this.reorderThreshold = reorderThreshold;
 	}
 
+	// Getter and setter methods
 	public String getProductId() {
 		return productId;
 	}

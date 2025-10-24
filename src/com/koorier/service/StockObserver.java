@@ -3,6 +3,6 @@ package com.koorier.service;
 import com.koorier.core.Product;
 
 public interface StockObserver {
-	
-  void onLowStock(Product product);
+	// Notify on low stock
+	void onLowStock(Product product);
 }

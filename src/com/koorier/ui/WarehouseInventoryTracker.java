@@ -17,23 +17,25 @@ public class WarehouseInventoryTracker {
 			manager.loadWarehouseList();
 			WarehouseImplementation currentWarehouse = null;
 
+			// Observer for alerts
 			StockObserver alertObserver = new StockObserver() {
 				@Override
 				public void onLowStock(Product product) {
-					System.out.println("Restock Alert: Low stock for " + product.getName() + " - only "
-							+ product.getQuantity() + " left!");
+					System.out.println(
+							"Low stock for " + product.getName() + " - only " + product.getQuantity() + " left!");
 				}
 			};
 			boolean exit = false;
 			while (!exit) {
+				// Warehouse selection menu
 				if (currentWarehouse == null) {
 					System.out.println("Warehouse Management System\n" + "Option\n" + "1.View all warehouse\n"
-							+ "2. Select warehouse\n" + "3 Create Warehouse\n" + "0. Exit");
+							+ "2.Select warehouse\n" + "3.Create Warehouse\n" + "0. Exit");
 					System.out.println("Enter option :");
 
 					try {
 						int choice = sc.nextInt();
-						sc.nextLine(); 
+						sc.nextLine();
 						switch (choice) {
 						case 1: {
 							System.out.println("Existing Warehouses:");
@@ -83,13 +85,15 @@ public class WarehouseInventoryTracker {
 						System.out.println("Invalid input type! Please enter a number.");
 						sc.nextLine();
 					}
-				} else {
+				} else
+				// Warehouse operations menu
+				{
 					System.out.println("\nWarehouse: " + currentWarehouse.getWarehouseId());
 					System.out.println("Option\n" + "1.Add an new product\n" + "2.Recieve Shipment \n"
-							+ "3.Fulfill order \n" + "4.View all product\n" + "5. Switch Warehouse\n" + "0.Exit");
+							+ "3.Fulfill order \n" + "4.View all product\n" + "5.Switch Warehouse\n" + "0.Exit");
 					try {
 						int choice = sc.nextInt();
-						sc.nextLine(); 
+						sc.nextLine();
 						switch (choice) {
 						case 1: {
 							System.out.println("Enter product details:");
@@ -130,6 +134,11 @@ public class WarehouseInventoryTracker {
 						}
 
 						case 5: {
+							try {
+								currentWarehouse.saveToFile();
+							} catch (WarehouseInventoryException e) {
+								System.out.println("Warning: " + e.getMessage());
+							}
 							currentWarehouse = null;
 							break;
 						}

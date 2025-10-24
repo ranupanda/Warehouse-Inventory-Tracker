@@ -13,10 +13,14 @@ import java.util.Map;
 
 import com.koorier.customException.WarehouseInventoryException;
 
+// Manages multiple warehouses
 public class WarehouseManager {
+	
 	private static final String WAREHOUSES_FILE = "warehouses.txt";
+	
 	private Map<String, WarehouseImplementation> warehouses = new HashMap<>();
 
+	// method to get and load warehouse
 	public WarehouseImplementation getWarehouse(String warehouseId) throws WarehouseInventoryException {
 		if (!warehouses.containsKey(warehouseId)) {
 			throw new WarehouseInventoryException("Warehouse '" + warehouseId + "' not found.");
@@ -30,6 +34,7 @@ public class WarehouseManager {
 		return warehouse;
 	}
 
+	// method to create a new warehouse
 	public WarehouseImplementation createWarehouse(String warehouseId) throws WarehouseInventoryException {
 		if (warehouses.containsKey(warehouseId)) {
 			throw new WarehouseInventoryException("Warehouse '" + warehouseId + "' already exists.");
@@ -39,7 +44,8 @@ public class WarehouseManager {
 
 		return newWarehouse;
 	}
-
+	
+	// method to save warehouse list
 	public void saveWarehouseList() {
 		try (PrintWriter writer = new PrintWriter(new FileWriter(WAREHOUSES_FILE))) {
 			warehouses.keySet().forEach(writer::println);
@@ -48,6 +54,7 @@ public class WarehouseManager {
 		}
 	}
 
+	// method to load warehouse list
 	public void loadWarehouseList() {
 		File file = new File(WAREHOUSES_FILE);
 		if (!file.exists()) {

@@ -14,7 +14,7 @@ public class WarehouseInventoryValidation {
 			throw new WarehouseInventoryException("Enter valid ProductId");
 		}
 	}
-
+	//validate Product name
 	public static void validateProductName(String name) throws WarehouseInventoryException {
 		if (!name.matches("^[A-Za-z\\s]+(?:\\s?[A-Za-z0-9]+)*$")) {
 			throw new WarehouseInventoryException("Enter valid product name");
@@ -42,7 +42,6 @@ public class WarehouseInventoryValidation {
 	public static void validateFileExists(String fileName) throws WarehouseInventoryException {
 		File file = new File(fileName);
 		if (!file.exists()) {
-			System.out.println("No existing inventory file found. Starting with an empty inventory.");
 			return;
 		}
 	}

@@ -1,16 +1,15 @@
 package com.koorier.service;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -18,13 +17,14 @@ import com.koorier.core.Product;
 import com.koorier.customException.WarehouseInventoryException;
 import com.koorier.validation.WarehouseInventoryValidation;
 
+//Warehouse operations with in-memory storage and persistence
 public class WarehouseImplementation implements Warehouse {
 
 	private String warehouseId;
 
 	private Map<String, Product> products = new HashMap<>();
 
-	private List<StockObserver> observers = new ArrayList<>();
+	private Set<StockObserver> observers = new HashSet<>();
 
 	private ExecutorService executor = Executors.newFixedThreadPool(5);
 
@@ -104,14 +104,6 @@ public class WarehouseImplementation implements Warehouse {
 		});
 	}
 
-	public void addObserver(StockObserver observer) {
-		observers.add(observer);
-	}
-
-	private void notifyObservers(Product product) {
-		observers.forEach(observer -> observer.onLowStock(product));
-	}
-
 	// method to view all the product
 	@Override
 	public void viewAllProduct() {
@@ -139,12 +131,7 @@ public class WarehouseImplementation implements Warehouse {
 	// method to load from the file
 	public void loadFromFile() throws WarehouseInventoryException {
 		String fileName = "inventory_" + warehouseId + ".txt";
-		//WarehouseInventoryValidation.validateFileExists(fileName);
-		File file = new File(fileName);
-		if (!file.exists()) {
-			//System.out.println("No existing inventory file found. Starting with an empty inventory.");
-			return;
-		}
+		WarehouseInventoryValidation.validateFileExists(fileName);
 		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
 
 			br.lines().map(line -> line.split(",")).filter(parts -> parts.length == 4).forEach(part -> {
@@ -164,11 +151,23 @@ public class WarehouseImplementation implements Warehouse {
 		}
 	}
 
+	// Add observer for alerts
+	public void addObserver(StockObserver observer) {
+		observers.add(observer);
+	}
+
+	// Notify all observers
+	private void notifyObservers(Product product) {
+		observers.forEach(observer -> observer.onLowStock(product));
+	}
+
+	// Shutdown all threads
 	public void shutdown() {
 		executor.shutdown();
 		System.out.println("Warehouse operations shut down.");
 	}
 
+	// Getter for Warehouse Id
 	public String getWarehouseId() {
 		return warehouseId;
 	}
