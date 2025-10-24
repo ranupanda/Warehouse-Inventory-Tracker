@@ -33,7 +33,7 @@ public class WarehouseInventoryTracker {
 
 					try {
 						int choice = sc.nextInt();
-						sc.nextLine(); // Consume newline
+						sc.nextLine(); 
 						switch (choice) {
 						case 1: {
 							System.out.println("Existing Warehouses:");
@@ -89,7 +89,7 @@ public class WarehouseInventoryTracker {
 							+ "3.Fulfill order \n" + "4.View all product\n" + "5. Switch Warehouse\n" + "0.Exit");
 					try {
 						int choice = sc.nextInt();
-						sc.nextLine(); // Consume newline
+						sc.nextLine(); 
 						switch (choice) {
 						case 1: {
 							System.out.println("Enter product details:");
@@ -130,7 +130,7 @@ public class WarehouseInventoryTracker {
 						}
 
 						case 5: {
-							currentWarehouse = null; // Go back to warehouse selection
+							currentWarehouse = null;
 							break;
 						}
 						case 0: {
